@@ -18,6 +18,8 @@ st.set_page_config(page_title="ShopEasy Returns Agent", page_icon="🛍️")
 @st.cache_resource
 def get_agent():
     """Streamlit reruns this file on every click, so build the agent (and its memory) only once."""
+    if not database.FILE.exists():
+        database.reset()
     return build_agent()
 
 
