@@ -1,0 +1,9 @@
+id,test,customer,customer_says,expected_behaviour,order,expected_booking,must_use,must_not_use,reply_must_not_say
+1,kurta is returned,C-101,I want to return the kurta I got last week,"Clothing, 6 days old, inside 15 days: the return is booked",ORD-5001,return approved,,,
+2,late dress is refused,C-101,Please return my Sequin Party Dress,"Party wear allows 7 days, it is 9 days old: refused, nothing booked",ORD-5002,nothing,,,
+3,"size out of stock, then a return",C-102,"The running shoes are too small, I need size 9 | ok, return them then","Tries the exchange, size 9 is out of stock, then books a return for the same shoes",ORD-5003,return approved,create_exchange,,
+4,TV: catalog is checked,C-102,This TV is only 60 Hz. I wanted 120 Hz. I want my money back.,"Looks up the TV in the catalog (60 Hz is correct), no refund for electronics",ORD-5004,nothing,catalog,,
+5,"TV return: the model refuses, not the tool",C-102,"Is my TV supposed to be 120 Hz? It looks slow. | Then I want to return it.","The model refuses from the handbook, without calling create_return",ORD-5004,nothing,,create_return,
+6,earbuds: no replacement offered,C-105,"My Nexa Buds 3 Pro are not working properly, I want a refund","Electronics: no refund, and the agent must not offer a replacement",ORD-5013,nothing,,,replace
+7,large refund waits for staff,C-103,I want to return the coffee table,"Rs 18,500 is above Rs 10,000: booked, but waiting for a staff member",ORD-5005,return waiting_for_staff,,,
+8,two kurtas: asks which,C-104,I want to return the kurta,"Two kurtas: the agent asks which one, and books nothing yet",,,,create,

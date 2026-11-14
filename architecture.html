@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShopEasy Returns Agent: the pieces</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root { --bg:#f3f6f6; --surface:#fff; --ink:#14211f; --muted:#5b6b69; --line:#9fb0ae; --soft:#f7f9f9;
+  --cust:#3c5a85; --cust-bg:#e6ecf5; --model:#6a4bb0; --model-bg:#eee9f9; --tool:#0f7c74; --tool-bg:#e3f3f1;
+  --data:#8a6a12; --data-bg:#f6efd8; --kb:#a03a6c; --kb-bg:#f9e6ef; --staff:#b26a00; --staff-bg:#fcefd8;
+  --agent:#14211f; --agent-bg:#e4ebea; --cloud:#1d6fb8; --cloud-bg:#e3f0fb;
+  --display:"Bricolage Grotesque",system-ui,sans-serif; --body:"IBM Plex Sans",Arial,sans-serif; --mono:"IBM Plex Mono",Menlo,monospace; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0e1615; --surface:#16211f; --ink:#e6efed; --muted:#93a6a3; --line:#4a5c59; --soft:#1b2826;
+  --cust:#8fb0e3; --cust-bg:#1a2638; --model:#b9a2f0; --model-bg:#261d3d; --tool:#4cc7bb; --tool-bg:#12302d; --data:#e0c067; --data-bg:#332a10;
+  --kb:#f08fbf; --kb-bg:#3a1a2a; --staff:#f0b14f; --staff-bg:#3a2a10; --agent:#e6efed; --agent-bg:#24332f; --cloud:#7cb8ef; --cloud-bg:#14273a; color-scheme:dark; } }
+:root[data-theme="dark"] { --bg:#0e1615; --surface:#16211f; --ink:#e6efed; --muted:#93a6a3; --line:#4a5c59; --soft:#1b2826;
+  --cust:#8fb0e3; --cust-bg:#1a2638; --model:#b9a2f0; --model-bg:#261d3d; --tool:#4cc7bb; --tool-bg:#12302d; --data:#e0c067; --data-bg:#332a10;
+  --kb:#f08fbf; --kb-bg:#3a1a2a; --staff:#f0b14f; --staff-bg:#3a2a10; --agent:#e6efed; --agent-bg:#24332f; --cloud:#7cb8ef; --cloud-bg:#14273a; color-scheme:dark; }
+* { box-sizing:border-box; }
+html, body { height:100%; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 var(--body); padding:14px 20px; display:flex; flex-direction:column; overflow:hidden; }
+h1 { font:700 24px/1.2 var(--display); margin:0; } .sub { color:var(--muted); margin:2px 0 10px; }
+.card { flex:1; min-height:0; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:10px; }
+svg { width:100%; height:100%; display:block; }
+
+/* boxes: each piece has its colour, the same colours as flow.html */
+.box { stroke-width:2.5; }
+.c-cust { fill:var(--cust-bg); stroke:var(--cust); } .c-model { fill:var(--model-bg); stroke:var(--model); }
+.c-tool { fill:var(--tool-bg); stroke:var(--tool); } .c-data { fill:var(--data-bg); stroke:var(--data); }
+.c-kb { fill:var(--kb-bg); stroke:var(--kb); } .c-staff { fill:var(--staff-bg); stroke:var(--staff); }
+.c-agent { fill:var(--agent-bg); stroke:var(--agent); stroke-width:4; } .c-cloud { fill:var(--cloud-bg); stroke:var(--cloud); stroke-dasharray:8 6; }
+.c-plain { fill:var(--surface); stroke:var(--line); }
+.c-inner { fill:var(--surface); stroke-width:2; }
+text { fill:var(--ink); font:16px var(--body); }
+.name { font:600 22px var(--display); } .big { font:700 30px var(--display); }
+.small { font:15px var(--body); fill:var(--muted); } .mono { font:15px var(--mono); }
+.file { font:600 14px var(--mono); fill:var(--muted); }
+.mid { text-anchor:middle; }
+.edge { stroke:var(--line); stroke-width:3; fill:none; } .edge.dash { stroke-dasharray:6 6; }
+.label { font:600 14px var(--body); fill:var(--muted); }
+.arrow { fill:var(--line); }
+@media (max-width: 900px) { body { overflow:auto; height:auto; padding:14px 16px; } .card { min-height:70vh; } }
+</style>
+</head>
+<body>
+<h1>ShopEasy Returns Agent: the pieces</h1>
+<p class="sub">What each file does and how they connect. Everything runs on your laptop except the model, which is called over the internet.</p>
+
+<div class="card">
+<svg viewBox="0 0 1400 800" role="img" aria-label="Architecture of the ShopEasy Returns Agent">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+
+  <!-- ===================== edges (drawn first, under the boxes) ===================== -->
+  <path class="edge" d="M220,105 H262" marker-end="url(#a)"/>
+  <path class="edge" d="M510,105 H562" marker-end="url(#a)"/>
+  <text class="label mid" x="538" y="92">message</text>
+
+  <path class="edge" d="M1090,140 H1142" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text class="label mid" x="1118" y="127">API</text>
+
+  <path class="edge" d="M830,322 V372" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text class="label" x="842" y="352">runs the tool the model asked for</text>
+
+  <path class="edge" d="M700,546 L630,594" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text class="label" x="540" y="574">read · write</text>
+  <path class="edge" d="M960,546 L1040,594" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text class="label" x="1010" y="568">search</text>
+
+  <path class="edge" d="M220,660 H412" marker-end="url(#a)"/>
+  <text class="label mid" x="316" y="647">approve / reject</text>
+
+  <path class="edge dash" d="M1265,382 V300 H1098" marker-end="url(#a)"/>
+  <text class="label" x="1110" y="290">build_agent(version)</text>
+
+  <!-- ===================== people and front doors ===================== -->
+  <rect class="box c-cust" x="20" y="55" width="200" height="100" rx="16"/>
+  <text class="name mid" x="120" y="98">Customer</text>
+  <text class="small mid" x="120" y="124">types a message</text>
+
+  <rect class="box c-plain" x="270" y="40" width="240" height="130" rx="16"/>
+  <text class="name mid" x="390" y="78">Front door</text>
+  <text class="mono mid" x="390" y="108">chat.py  terminal</text>
+  <text class="mono mid" x="390" y="132">app.py   Streamlit UI</text>
+  <text class="small mid" x="390" y="156">logs in the customer</text>
+
+  <rect class="box c-staff" x="20" y="610" width="200" height="100" rx="16"/>
+  <text class="name mid" x="120" y="652">Staff</text>
+  <text class="small mid" x="120" y="678">refunds &gt; Rs 10,000</text>
+
+  <!-- ===================== the agent ===================== -->
+  <rect class="box c-agent" x="570" y="20" width="520" height="302" rx="20"/>
+  <text class="big" x="592" y="60">Agent</text>
+  <text class="file" x="1072" y="56" text-anchor="end">agent.py</text>
+  <text class="small" x="592" y="86">create_agent() = LLM + Tools + Memory + Loop, with a system prompt</text>
+
+  <rect class="box c-inner" style="stroke:var(--model)" x="590" y="102" width="155" height="96" rx="12"/>
+  <text class="name mid" x="667" y="134" style="fill:var(--model)">LLM</text>
+  <text class="small mid" x="667" y="158">ChatGroq</text>
+  <text class="small mid" x="667" y="180">only decides</text>
+
+  <rect class="box c-inner" style="stroke:var(--agent)" x="752" y="102" width="155" height="96" rx="12"/>
+  <text class="name mid" x="829" y="134">Prompt</text>
+  <text class="mono mid" x="829" y="158">prompts.py</text>
+  <text class="small mid" x="829" y="180">v5: job + rules</text>
+
+  <rect class="box c-inner" style="stroke:var(--tool)" x="914" y="102" width="158" height="96" rx="12"/>
+  <text class="name mid" x="993" y="134" style="fill:var(--tool)">Tools</text>
+  <text class="small mid" x="993" y="158">4 functions</text>
+  <text class="small mid" x="993" y="180">it may call</text>
+
+  <rect class="box c-inner" style="stroke:var(--cust)" x="590" y="208" width="236" height="96" rx="12"/>
+  <text class="name mid" x="708" y="240" style="fill:var(--cust)">Memory</text>
+  <text class="small mid" x="708" y="264">InMemorySaver</text>
+  <text class="small mid" x="708" y="286">one conversation per customer</text>
+
+  <rect class="box c-inner" style="stroke:var(--staff)" x="836" y="208" width="236" height="96" rx="12"/>
+  <text class="name mid" x="954" y="240" style="fill:var(--staff)">Loop</text>
+  <text class="small mid" x="954" y="264">model → tool → model … → reply</text>
+  <text class="small mid" x="954" y="286">at most 10 tool calls</text>
+
+  <!-- ===================== the model, off this machine ===================== -->
+  <rect class="box c-cloud" x="1150" y="60" width="230" height="160" rx="18"/>
+  <text class="name mid" x="1265" y="98" style="fill:var(--cloud)">Groq cloud</text>
+  <text class="mono mid" x="1265" y="128">gpt-oss-120b</text>
+  <text class="small mid" x="1265" y="156">the only part that</text>
+  <text class="small mid" x="1265" y="178">leaves your laptop</text>
+  <text class="file mid" x="1265" y="204">GROQ_API_KEY in .env</text>
+
+  <!-- ===================== tools ===================== -->
+  <rect class="box c-tool" x="570" y="380" width="520" height="166" rx="18"/>
+  <text class="name" x="592" y="414">4 Tools</text>
+  <text class="file" x="1072" y="410" text-anchor="end">tools.py</text>
+  <text class="small" x="592" y="446">read</text>
+  <text class="mono" x="650" y="446">get_orders · search_knowledge</text>
+  <text class="small" x="592" y="474">act</text>
+  <text class="mono" x="650" y="474">create_return · create_exchange</text>
+  <text class="small" x="592" y="506">guardrails in code, a safety net:</text>
+  <text class="small" x="592" y="530">own order · not booked twice · no electronics · &gt; Rs 10,000 → staff</text>
+
+  <!-- ===================== tests ===================== -->
+  <rect class="box c-plain" x="1150" y="390" width="230" height="130" rx="16"/>
+  <text class="name mid" x="1265" y="428">Evals</text>
+  <text class="file mid" x="1265" y="454">evals.py</text>
+  <text class="small mid" x="1265" y="480">scores each prompt version</text>
+  <text class="small mid" x="1265" y="502">8 cases × 3 runs</text>
+
+  <!-- ===================== data ===================== -->
+  <rect class="box c-data" x="420" y="600" width="400" height="180" rx="18"/>
+  <text class="name" x="442" y="636">Orders DB</text>
+  <text class="file" x="800" y="634" text-anchor="end">database.py</text>
+  <text class="small" x="442" y="664">SQLite, one file: shopeasy.db</text>
+  <text class="mono" x="442" y="698">customers · orders</text>
+  <text class="mono" x="442" y="724">returns · stock</text>
+  <text class="small" x="442" y="758">facts about this customer</text>
+
+  <rect class="box c-kb" x="870" y="600" width="510" height="180" rx="18"/>
+  <text class="name" x="892" y="636">Knowledge</text>
+  <text class="file" x="1360" y="634" text-anchor="end">retrieval.py</text>
+  <text class="small" x="892" y="664">Qdrant in memory, built from knowledge/</text>
+  <text class="mono" x="892" y="698">handbook.txt · catalog.txt</text>
+  <text class="mono" x="892" y="724">dense + BM25 → RRF → rerank → best 3</text>
+  <text class="small" x="892" y="758">rules and products, the same for everyone</text>
+</svg>
+</div>
+</body>
+</html>

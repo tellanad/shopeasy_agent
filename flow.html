@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShopEasy Returns Agent: watch it work</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root { --bg:#f3f6f6; --surface:#fff; --ink:#14211f; --muted:#5b6b69; --line:#c9d4d3; --soft:#f7f9f9;
+  --cust:#3c5a85; --cust-bg:#e6ecf5; --model:#6a4bb0; --model-bg:#eee9f9; --tool:#0f7c74; --tool-bg:#e3f3f1;
+  --data:#8a6a12; --data-bg:#f6efd8; --kb:#a03a6c; --kb-bg:#f9e6ef; --staff:#b26a00; --staff-bg:#fcefd8;
+  --agent:#14211f; --agent-bg:#e4ebea; --ok:#1e8a4c; --bad:#c2362f;
+  --display:"Bricolage Grotesque",system-ui,sans-serif; --body:"IBM Plex Sans",Arial,sans-serif; --mono:"IBM Plex Mono",Menlo,monospace; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0e1615; --surface:#16211f; --ink:#e6efed; --muted:#93a6a3; --line:#2e3d3b; --soft:#1b2826;
+  --cust:#8fb0e3; --cust-bg:#1a2638; --model:#b9a2f0; --model-bg:#261d3d; --tool:#4cc7bb; --tool-bg:#12302d; --data:#e0c067; --data-bg:#332a10;
+  --kb:#f08fbf; --kb-bg:#3a1a2a; --staff:#f0b14f; --staff-bg:#3a2a10; --agent:#e6efed; --agent-bg:#24332f; --ok:#5fd08d; --bad:#f07a72; color-scheme:dark; } }
+:root[data-theme="dark"] { --bg:#0e1615; --surface:#16211f; --ink:#e6efed; --muted:#93a6a3; --line:#2e3d3b; --soft:#1b2826;
+  --cust:#8fb0e3; --cust-bg:#1a2638; --model:#b9a2f0; --model-bg:#261d3d; --tool:#4cc7bb; --tool-bg:#12302d; --data:#e0c067; --data-bg:#332a10;
+  --kb:#f08fbf; --kb-bg:#3a1a2a; --staff:#f0b14f; --staff-bg:#3a2a10; --agent:#e6efed; --agent-bg:#24332f; --ok:#5fd08d; --bad:#f07a72; color-scheme:dark; }
+* { box-sizing:border-box; }
+html, body { height:100%; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 var(--body); padding:14px 20px 0; display:flex; flex-direction:column; overflow:hidden; }
+h1 { font:700 24px/1.2 var(--display); margin:0; } .sub { color:var(--muted); margin:2px 0 14px; }
+.picks { display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; }
+.pick { text-align:left; background:var(--surface); border:1.5px solid var(--line); border-radius:10px; padding:8px 10px; cursor:pointer; font:inherit; color:inherit; }
+.pick b { display:block; font:600 13.5px/1.25 var(--display); } .pick span { color:var(--muted); font-size:12px; }
+.pick.on { border-color:var(--ink); box-shadow:0 0 0 3px color-mix(in srgb, var(--ink) 12%, transparent); }
+
+/* the diagram: the agent sits in the middle, every message passes through it */
+.stage { flex:1; min-height:0; display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.1fr); gap:14px; margin:12px 0; }
+.diagram { display:flex; flex-direction:column; gap:8px; padding:10px; min-height:0; }
+.diagram svg { flex:1; min-height:0; }
+.side { display:flex; flex-direction:column; gap:12px; min-height:0; }
+.side .card { flex:none; } .side .card.grow { flex:1; min-height:0; display:flex; flex-direction:column; }
+#sendbox { flex:1; min-height:0; display:flex; flex-direction:column; }
+#convo { flex:1; min-height:0; overflow:auto; }
+.talk { font-size:15.5px; animation:in .3s ease; }
+.ask { border-left:5px solid var(--cust); } .answer { border-left:5px solid var(--model); }
+.staffnote { margin-top:6px; padding:6px 10px; border-radius:8px; background:var(--staff-bg); color:var(--staff); font-size:14px; }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px 16px; }
+.card h2 { font:600 11.5px/1 var(--body); letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin:0 0 10px; display:flex; justify-content:space-between; gap:8px; }
+.card h2 em { font-style:normal; text-transform:none; letter-spacing:0; color:var(--ink); }
+svg { width:100%; height:100%; display:block; }
+.node { transition:opacity .25s; } .node rect { stroke-width:2; transition:all .25s; }
+.node text { fill:var(--muted); font:16px var(--body); text-anchor:middle; }
+.node text.name { fill:var(--ink); font:600 23px var(--display); }
+.node.agent text.name { font-size:30px; } .node.agent rect { stroke-width:3.5; }
+.node.customer rect { stroke:var(--cust); fill:var(--cust-bg); } .node.model rect { stroke:var(--model); fill:var(--model-bg); }
+.node.tools rect { stroke:var(--tool); fill:var(--tool-bg); } .node.db rect { stroke:var(--data); fill:var(--data-bg); }
+.node.kb rect { stroke:var(--kb); fill:var(--kb-bg); } .node.staff rect { stroke:var(--staff); fill:var(--staff-bg); }
+.node.agent rect { stroke:var(--agent); fill:var(--agent-bg); }
+svg.live .node { opacity:.4; } svg.live .node.on { opacity:1; } .node.on rect { stroke-width:5; filter:drop-shadow(0 6px 10px rgba(0,0,0,.18)); }
+.edge { stroke:var(--line); stroke-width:3; } .edge.on { stroke-width:6; }
+#thought { opacity:0; transition:opacity .3s; } #thought.on { opacity:1; }
+.thought { height:auto; display:flex; flex-direction:column; justify-content:flex-start; gap:6px; padding:12px 14px; border:3px dashed var(--model); border-radius:18px; background:var(--model-bg); color:var(--ink); font:500 19px/1.35 var(--body); }
+.thought b { font:600 15px var(--body); letter-spacing:.05em; text-transform:uppercase; color:var(--model); }
+.chip rect { fill:var(--ink); } .chip text { fill:var(--surface); font:600 15px var(--mono); text-anchor:middle; }
+
+.say { display:flex; flex-direction:column; gap:8px; }
+.say .who { font:600 11.5px var(--body); letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.say .what { font:600 19px/1.3 var(--display); }
+.say .what code { font:500 16px var(--mono); }
+.say .why { color:var(--muted); font-size:14.5px; }
+.say .box { font:13px/1.45 var(--mono); background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:8px 10px; word-break:break-word; }
+.good { color:var(--ok); font-weight:600; } .no { color:var(--bad); font-weight:600; }
+
+main { display:grid; grid-template-columns:minmax(240px, 1fr) minmax(0, 1.4fr); gap:16px; align-items:start; }
+.bubble { max-width:88%; padding:8px 12px; border-radius:14px; margin-bottom:8px; animation:in .3s ease; font-size:14.5px; }
+.bubble.customer { background:var(--cust-bg); margin-left:auto; border-bottom-right-radius:4px; }
+.bubble.agent { background:var(--soft); border:1px solid var(--line); border-bottom-left-radius:4px; }
+.bubble.staff { background:var(--staff-bg); margin:0 auto 8px; text-align:center; font-size:13.5px; }
+.bubble small { display:block; font:600 10.5px var(--body); letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+
+/* what the model receives: this list is sent in full on every call, and it keeps growing */
+#sendbox { border-radius:10px; transition:box-shadow .25s; }
+#sendbox.sent { box-shadow:0 0 0 3px var(--model); }
+#fixed .msg:last-child { border-bottom:1px solid var(--line); }
+.msg { display:grid; grid-template-columns:104px 1fr; gap:10px; padding:4px 8px; line-height:1.4; border-top:1px solid var(--line); font-size:16px; }
+.msg:first-child { border-top:0; } .msg.fixed { background:var(--soft); } .msg.new { animation:in .35s ease; background:color-mix(in srgb, var(--model-bg) 70%, transparent); }
+.msg code { font:15px var(--mono); }
+/* older messages take one line; the newest ones show more */
+.msg > div { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:1; overflow:hidden; word-break:break-word; }
+.msg.recent > div { -webkit-line-clamp:3; }
+.tag { font:600 12px/1.7 var(--body); letter-spacing:.05em; text-transform:uppercase; border-radius:5px; padding:1px 6px; height:fit-content; text-align:center; }
+.r-system { color:var(--muted); background:var(--line); } .r-tools { color:var(--tool); background:var(--tool-bg); }
+.r-user { color:var(--cust); background:var(--cust-bg); } .r-ai { color:var(--model); background:var(--model-bg); } .r-tool { color:var(--data); background:var(--data-bg); }
+.point { margin-top:8px; padding:9px 12px; border-radius:10px; background:var(--staff-bg); color:var(--staff); font-weight:500; animation:in .3s ease; }
+.empty { color:var(--muted); }
+@keyframes in { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+.bar { margin:0 -20px; background:var(--surface);
+  border-top:1px solid var(--line); padding:10px 20px; display:flex; align-items:center; gap:12px; }
+.bar button { white-space:nowrap; font:600 15px var(--body); padding:9px 18px; border-radius:10px; border:1.5px solid var(--ink); background:var(--ink); color:var(--surface); cursor:pointer; }
+.bar button.ghost { background:transparent; color:var(--ink); } .bar button:disabled { opacity:.35; }
+.prog { flex:1; height:6px; background:var(--line); border-radius:6px; overflow:hidden; } .prog i { display:block; height:100%; background:var(--ink); transition:width .25s; }
+.bar small { color:var(--muted); white-space:nowrap; }
+@media (max-width: 900px) { body { padding:14px 16px 0; overflow:auto; height:auto; } .stage { grid-template-columns:1fr; } .bar { position:sticky; bottom:0; margin:0 -16px; } .picks { grid-template-columns:1fr 1fr; }
+  .msg { grid-template-columns:1fr; gap:2px; } .tag { width:fit-content; } .bar { padding:10px 16px; gap:8px; } .bar button { padding:8px 12px; } .prog { display:none; } }
+</style>
+</head>
+<body>
+<h1>ShopEasy Returns Agent: watch it work</h1>
+<p class="sub">Every message goes through the <b>agent</b> in the middle. The model only decides; the agent runs the tools. Tool calls are from real runs; 💭 is the model's reasoning, in short.</p>
+<div class="picks" id="picks"></div>
+
+<div class="stage">
+  <div class="card diagram">
+    <svg viewBox="0 0 900 666" role="img" aria-label="Customer, Agent, Model, Tools, Orders DB, Knowledge and Staff">
+      <g id="edges"></g>
+      <g id="nodes"></g>
+      <g id="chips"></g>
+      <circle id="packet" r="10" opacity="0"></circle>
+      <foreignObject id="thought" x="636" y="168" width="258" height="222"><div class="thought"><b>💭 Model thinks</b><span id="thought-text"></span></div></foreignObject>
+    </svg>
+    <div id="point"></div>
+  </div>
+  <div class="side">
+    <div class="card ask"><h2>Customer says</h2><div id="ask"></div></div>
+    <div class="card grow"><h2>What the agent sends to the model <em id="calls"></em></h2><div id="sendbox"><div id="fixed"></div><div id="convo"></div></div></div>
+    <div class="card answer"><h2>Agent replies</h2><div id="answer"></div></div>
+  </div>
+</div>
+
+<div class="bar">
+  <button class="ghost" id="back">← Back</button>
+  <button id="play">▶ Play</button>
+  <button class="ghost" id="next">Next →</button>
+  <div class="prog"><i id="prog"></i></div><small id="count"></small>
+</div>
+
+<script>
+const ok = t => `<span class="good">✓</span> ${t}`, no = t => `<span class="no">✕</span> ${t}`;
+const FLOWS = [
+{ title: "Return a kurta", who: "C-101 · the simple path", point: "3 tools, in an order the model chose. The model read the 15-day rule in the handbook and decided. The tool then checked its own limits before booking.",
+  steps: [
+  ["user", "I want to return the kurta I got last week"],
+  ["think", "Find the order first."],
+  ["call", "get_orders()"],
+  ["result", "Cotton Kurta (ORD-5001), Sequin Party Dress (ORD-5002)", "from SQLite"],
+  ["think", "It is the Cotton Kurta, clothing. What is the rule?"],
+  ["call", 'search_knowledge("return policy clothing", source="handbook")'],
+  ["result", "Section 8: clothing and footwear can be returned within 15 days of delivery.", "from Qdrant, hybrid search"],
+  ["think", "Delivered 6 days ago. Within 15. Book it."],
+  ["call", 'create_return("ORD-5001")'],
+  ["result", "Return booked. Pickup within 2 working days.", [ok("this customer's order"), ok("not already booked"), ok("not electronics"), ok("Rs 1,299 ≤ Rs 10,000")].join(" &nbsp; ")],
+  ["think", "Booked. Tell the customer the pickup and refund."],
+  ["reply", "Your return for the Cotton Kurta is booked. Pickup within 2 working days, and a refund of Rs 1,299 after the quality check."],
+]},
+{ title: "Shoes too small", who: "C-102 · changes plan", point: "The exchange failed, so the agent changed plan. On the second message it remembered which shoes, without asking again.",
+  steps: [
+  ["user", "The running shoes are too small, I need size 9"],
+  ["think", "Which shoes? Find the order first."],
+  ["call", "get_orders()"],
+  ["result", "Stride Running Shoes size 8 (ORD-5003), Zentro TV (ORD-5004)", "from SQLite"],
+  ["think", "A wrong size is an exchange, not a return."],
+  ["call", 'search_knowledge("size exchange footwear", source="handbook")'],
+  ["result", "Section 9: one free size exchange within the return window, subject to stock.", "from Qdrant"],
+  ["think", "Exchange allowed if in stock. Try size 9."],
+  ["call", 'create_exchange("ORD-5003", new_size="9")'],
+  ["result", "Out of stock: size 9 is not available. A return is possible instead.", [no("size 9 in stock: 0")].join(" &nbsp; ")],
+  ["think", "No size 9. Book nothing. Offer a return instead."],
+  ["reply", "Size 9 is currently out of stock. Would you like to return the shoes for a refund instead?"],
+  ["user", "ok, return them then"],
+  ["think", "They mean the running shoes from before. Book the return."],
+  ["call", 'create_return("ORD-5003")'],
+  ["result", "Return booked. Refund of Rs 2,799 after the quality check.", "written to SQLite"],
+  ["think", "Booked. Confirm the pickup."],
+  ["reply", "Your return has been booked. The shoes will be picked up within 2 working days."],
+]},
+{ title: "Is my TV 120 Hz?", who: "C-102 · uses the catalog", point: "Two knowledge sources: the catalog says what the product is, the handbook says what to do. The model refused the return itself, from the handbook. No tool was called.",
+  steps: [
+  ["user", "Is my TV supposed to be 120 Hz? It looks slow."],
+  ["think", "Which TV? Find the order first."],
+  ["call", "get_orders()"],
+  ["result", "Stride Running Shoes (ORD-5003), Zentro Vision 55 4K LED TV ZT-55U5 (ORD-5004)", "from SQLite"],
+  ["think", "A question about the product itself. Look it up in the catalog."],
+  ["call", 'search_knowledge("Zentro Vision 55 4K LED TV (ZT-55U5)", source="catalog")'],
+  ["result", "ZT-55U5: 55-inch 4K UHD LED screen, 60 Hz. Warranty 1 year.", "from Qdrant: the model number matched by exact word"],
+  ["think", "Catalog says 60 Hz, so it works as listed. Check the electronics rule too."],
+  ["call", 'search_knowledge("electronics return policy", source="handbook")'],
+  ["result", "Section 13: electronics cannot be returned for a refund.", "from Qdrant"],
+  ["think", "60 Hz is normal for this TV. Explain kindly."],
+  ["reply", "Your TV is listed as 60 Hz, not 120 Hz, so it is working as described."],
+  ["user", "Then I want to return it."],
+  ["think", "The handbook already said electronics cannot be returned for a refund. Refuse kindly. No tool needed."],
+  ["reply", "I'm sorry, electronics cannot be returned for a refund under our policy. The TV matches its listing, so it is not defective."],
+]},
+{ title: "Return a coffee table", who: "C-103 · staff approval", point: "The agent wanted to book it. The tool held it back, because the refund is above Rs 10,000. A person made the final call.",
+  steps: [
+  ["user", "I want to return the coffee table"],
+  ["think", "Find the coffee table order."],
+  ["call", "get_orders()"],
+  ["result", "Sheesham Wood Coffee Table, Rs 18,500 (ORD-5005, delivered 5 days ago)", "from SQLite"],
+  ["think", "Home item, Rs 18,500. What is the rule?"],
+  ["call", 'search_knowledge("return policy home furniture", source="handbook")'],
+  ["result", "Section 8: home and kitchen products can be returned within 10 days.", "from Qdrant"],
+  ["think", "5 days, within 10. Book it."],
+  ["call", 'create_return("ORD-5005")'],
+  ["result", "Recorded, not refused. Refunds above Rs 10,000 need a staff member's approval.", [no("Rs 18,500 > Rs 10,000 → waiting_for_staff")].join(" &nbsp; ")],
+  ["think", "Waiting for staff. Tell the customer honestly."],
+  ["reply", "Your return request is recorded. As the amount is above Rs 10,000, a team member will review it."],
+  ["staff", "A staff member opens the queue and approves ORD-5005. Status: approved."],
+]},
+{ title: "Return the kurta (two kurtas)", who: "C-104 · asks which", point: "With two possible orders the agent did not guess. It asked, then carried on from the answer.",
+  steps: [
+  ["user", "I want to return the kurta"],
+  ["think", "Which kurta? Find the order first."],
+  ["call", "get_orders()"],
+  ["result", "Cotton Kurta (ORD-5006), Linen Kurta (ORD-5007), Slim Fit Jeans, Pressure Cooker", "from SQLite"],
+  ["think", "Two kurtas. I cannot tell which one. Ask."],
+  ["reply", "Which kurta would you like to return: the Cotton Kurta (ORD-5006) or the Linen Kurta (ORD-5007)?"],
+  ["user", "the linen one"],
+  ["think", "The linen one is ORD-5007. Check the clothing rule."],
+  ["call", 'search_knowledge("clothing return policy", source="handbook")'],
+  ["result", "Section 8: clothing and footwear can be returned within 15 days of delivery.", "from Qdrant"],
+  ["think", "Clothing rule found. Book ORD-5007."],
+  ["call", 'create_return("ORD-5007")'],
+  ["result", "Return booked. Refund of Rs 1,899 after the quality check.", [ok("Rs 1,899 ≤ Rs 10,000")].join(" &nbsp; ")],
+  ["think", "Booked. Confirm the pickup."],
+  ["reply", "Your return for the Linen Kurta is booked. Pickup within 2 working days."],
+]},
+];
+
+// ---------------------------------------------------------------- the diagram
+const NODES = {
+  customer: { x: 10,  y: 10,  w: 250, h: 96,  name: "Customer", sub: ["types in the chat"], color: "--cust" },
+  model:    { x: 640, y: 10,  w: 250, h: 96,  name: "Model (LLM)", sub: ["gpt-oss-120b on Groq", "only decides"], color: "--model" },
+  agent:    { x: 290, y: 170, w: 320, h: 150, name: "Agent", sub: ["LLM + Tools + Memory + Loop", "create_agent() in agent.py"], color: "--agent" },
+  tools:    { x: 150, y: 400, w: 600, h: 86,  name: "4 Tools (Python)", sub: ["get_orders · search_knowledge · create_return · create_exchange"], color: "--tool" },
+  staff:    { x: 10,  y: 570, w: 190, h: 86,  name: "Staff", sub: ["approves > Rs 10,000"], color: "--staff" },
+  db:       { x: 240, y: 570, w: 290, h: 86,  name: "Orders DB", sub: ["SQLite: orders, returns, stock"], color: "--data" },
+  kb:       { x: 570, y: 570, w: 320, h: 86,  name: "Knowledge", sub: ["Qdrant: handbook, catalog"], color: "--kb" },
+};
+// each edge: two end points and where its label chip sits
+const EDGES = {
+  "customer-agent": { a: [200, 106], b: [350, 170], chip: [262, 138] },
+  "agent-model":    { a: [550, 170], b: [700, 106], chip: [640, 138] },
+  "agent-tools":    { a: [450, 320], b: [450, 400], chip: [590, 360] },
+  "tools-db":       { a: [385, 486], b: [385, 570], chip: [262, 528] },
+  "tools-kb":       { a: [700, 486], b: [730, 570], chip: [812, 528] },
+  "staff-db":       { a: [200, 613], b: [240, 613], chip: [110, 540] },
+};
+const ns = "http://www.w3.org/2000/svg", $ = id => document.getElementById(id);
+const el = (tag, attrs, text) => { const e = document.createElementNS(ns, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text) e.textContent = text; return e; };
+for (const [id, n] of Object.entries(NODES)) {
+  const g = el("g", { class: `node ${id}`, id: `n-${id}` });
+  g.append(el("rect", { x: n.x, y: n.y, width: n.w, height: n.h, rx: 14 }));
+  const top = n.y + n.h / 2 - (n.sub.length * 20) / 2 + 6;
+  g.append(el("text", { class: "name", x: n.x + n.w / 2, y: top }, n.name));
+  n.sub.forEach((s, i) => g.append(el("text", { x: n.x + n.w / 2, y: top + 26 + i * 20 }, s)));
+  $("nodes").append(g);
+}
+for (const [id, e] of Object.entries(EDGES)) $("edges").append(el("line", { class: "edge", id: `e-${id}`, x1: e.a[0], y1: e.a[1], x2: e.b[0], y2: e.b[1] }));
+
+// ---------------------------------------------------------------- turn each scenario into hops between the boxes
+const short = t => t.length > 70 ? t.slice(0, 68) + "…" : t;
+const storeOf = call => call.startsWith("search_knowledge") ? "kb" : "db";
+const toolName = call => call.split("(")[0];
+
+function hopsOf(steps) {
+  const hops = []; let thought = null, call = null, n = 0;   // n = how many times the model has been called
+  const send = () => { n++; hops.push({ from: "agent", to: "model", chip: `call #${n}`, send: n,
+    who: `Agent → Model · call #${n}`, what: "Sends everything, again",
+    why: "System prompt + 4 tool descriptions + the whole conversation so far. The model remembers nothing between calls, so the agent sends it all every time." }); };
+  for (const [kind, text, extra] of steps) {
+    if (kind === "user") {
+      hops.push({ from: "customer", to: "agent", chip: "message", chat: ["customer", text], add: ["user", text],
+        who: "Customer → Agent", what: `“${text}”`, why: "The agent adds the message to this customer's conversation (its memory)." });
+      send();
+    } else if (kind === "think") thought = text;
+    else if (kind === "call") {
+      call = text;
+      hops.push({ from: "model", to: "agent", chip: `call ${toolName(text)}`, add: ["ai", `asks for ${text}`], thought,
+        who: "Model → Agent", what: `“Please call <code>${text}</code>”`, why: "The model cannot run code. It only answers with the tool it wants and the arguments." });
+      thought = null;
+      hops.push({ from: "agent", to: "tools", chip: `run ${toolName(text)}`, who: "Agent → Tool", what: `Runs <code>${toolName(text)}</code>`,
+        why: "The agent calls the Python function. The customer id comes from the login, not from the model." });
+    } else if (kind === "result") {
+      const store = storeOf(call), writes = /^create_/.test(call);
+      hops.push({ from: "tools", to: store, chip: store === "kb" ? "search" : writes ? "check + write" : "read",
+        who: `Tool → ${store === "kb" ? "Knowledge" : "Orders DB"}`,
+        what: store === "kb" ? "Searches Qdrant" : writes ? "Checks the rules in code, then writes SQLite" : "Reads SQLite",
+        why: store === "kb" ? "Hybrid search over the handbook or the catalog." : writes ? "The limits live in the tool, so the model cannot talk its way past them." : "Only this customer's orders.", box: extra });
+      hops.push({ from: "tools", to: "agent", chip: "result", add: ["tool", `${toolName(call)} → ${text}`],
+        who: "Tool → Agent", what: "The result comes back", why: "The agent adds it to the conversation. The conversation just got bigger.", box: text });
+      send();
+    } else if (kind === "reply") {
+      hops.push({ from: "model", to: "agent", chip: "final answer", add: ["ai", text], thought,
+        who: "Model → Agent", what: "A plain answer, no tool call", why: "No tool asked for, so the loop stops here." });
+      thought = null;
+      hops.push({ from: "agent", to: "customer", chip: "reply", chat: ["agent", text], who: "Agent → Customer", what: `“${text}”`, why: "One customer message, several model calls." });
+    } else if (kind === "staff") {
+      hops.push({ from: "staff", to: "db", chip: "approve", chat: ["staff", text], who: "Staff → Orders DB", what: "A person makes the final call", why: text });
+    }
+  }
+  return hops;
+}
+
+// ---------------------------------------------------------------- drawing one moment
+let flow = 0, at = -1, timer = null, hops = hopsOf(FLOWS[0].steps), anim = null;
+const color = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const ROLE = { user: "User", ai: "AI", tool: "Tool result" };
+
+function edgeOf(h) { const k = `${h.from}-${h.to}`, r = `${h.to}-${h.from}`; return EDGES[k] ? [k, false] : [r, true]; }
+
+function draw(animate) {
+  const f = FLOWS[flow], h = hops[at];
+  $("picks").innerHTML = FLOWS.map((x, i) => `<button class="pick${i === flow ? " on" : ""}" data-i="${i}"><b>${x.title}</b><span>${x.who}</span></button>`).join("");
+
+  // what has happened so far
+  const chat = [], convo = []; let calls = 0;
+  hops.slice(0, at + 1).forEach((x, i) => { if (x.chat) chat.push(x.chat); if (x.add) convo.push([...x.add, i === at]); if (x.send) calls = x.send; });
+
+  const lastAsk = chat.map(c => c[0]).lastIndexOf("customer"), after = chat.slice(lastAsk + 1);
+  const reply = after.find(c => c[0] === "agent"), staff = after.find(c => c[0] === "staff");
+  $("ask").innerHTML = lastAsk >= 0 ? `<div class="talk">${chat[lastAsk][1]}</div>` : `<span class="empty">Press Play.</span>`;
+  $("answer").innerHTML = (reply ? `<div class="talk">${reply[1]}</div>` : `<span class="empty">Not yet.</span>`) + (staff ? `<div class="staffnote">Staff: ${staff[1]}</div>` : "");
+  $("fixed").innerHTML = !calls ? "" : `<div class="msg fixed"><span class="tag r-system">System</span><div>System prompt: the Returns Agent's job and rules</div></div>
+    <div class="msg fixed"><span class="tag r-tools">Tools</span><div><code>get_orders · search_knowledge · create_return · create_exchange</code> with their descriptions</div></div>`;
+  $("convo").innerHTML = !calls ? `<div class="empty">Nothing sent to the model yet.</div>` : convo.map(([role, text, isNew], i) => `<div class="msg${isNew ? " new" : ""}${i >= convo.length - 3 ? " recent" : ""}"><span class="tag r-${role}">${ROLE[role]}</span><div>${role === "user" ? text : `<code>${text}</code>`}</div></div>`).join("");
+  $("sendbox").classList.toggle("sent", !!(h && h.send));
+  $("calls").textContent = calls ? `call #${calls} · ${2 + convo.length} items` : "";
+
+  // the diagram
+  document.querySelectorAll(".node").forEach(n => n.classList.remove("on"));
+  document.querySelectorAll(".edge").forEach(e => { e.classList.remove("on"); e.style.stroke = ""; });
+  document.querySelector("svg").classList.toggle("live", !!h);
+  $("thought").classList.toggle("on", !!(h && h.thought)); if (h && h.thought) $("thought-text").textContent = h.thought;
+  $("chips").innerHTML = ""; $("packet").setAttribute("opacity", 0); cancelAnimationFrame(anim);
+  if (h) {
+    $(`n-${h.from}`).classList.add("on"); $(`n-${h.to}`).classList.add("on");
+    const [key, flip] = edgeOf(h), e = EDGES[key];
+    $(`e-${key}`).classList.add("on"); $(`e-${key}`).style.stroke = color(NODES[h.from].color);
+    const w = h.chip.length * 9.1 + 22, chip = el("g", { class: "chip" });
+    chip.append(el("rect", { x: e.chip[0] - w / 2, y: e.chip[1] - 14, width: w, height: 28, rx: 14 }), el("text", { x: e.chip[0], y: e.chip[1] + 5 }, h.chip));
+    $("chips").append(chip);
+    const [a, b] = flip ? [e.b, e.a] : [e.a, e.b], p = $("packet");
+    p.setAttribute("fill", color(NODES[h.from].color)); p.setAttribute("opacity", 1);
+    const t0 = performance.now(), dur = animate ? 650 : 0;
+    const move = now => { const t = dur ? Math.min(1, (now - t0) / dur) : 1, k = t < .5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+      p.setAttribute("cx", a[0] + (b[0] - a[0]) * k); p.setAttribute("cy", a[1] + (b[1] - a[1]) * k); if (t < 1) anim = requestAnimationFrame(move); };
+    move(t0);
+  }
+
+  const done = at === hops.length - 1;
+  $("point").innerHTML = done ? `<div class="point">${f.point}</div>` : "";
+  $("convo").scrollTop = $("convo").scrollHeight;     // keep the newest message in view
+  $("back").disabled = at < 0; $("next").disabled = done;
+  $("play").textContent = timer ? "❚❚ Pause" : done ? "↻ Replay" : "▶ Play";
+  $("prog").style.width = `${(at + 1) / hops.length * 100}%`;
+  $("count").textContent = at < 0 ? `${hops.length} hops` : `Hop ${at + 1} of ${hops.length}`;
+}
+function stop() { clearInterval(timer); timer = null; }
+function go(to, animate) { at = Math.max(-1, Math.min(hops.length - 1, to)); if (at === hops.length - 1) stop(); draw(animate); }
+$("next").onclick = () => { stop(); go(at + 1, true); };
+$("back").onclick = () => { stop(); go(at - 1, false); };
+$("play").onclick = () => {
+  if (timer) { stop(); return draw(false); }
+  if (at === hops.length - 1) at = -1;
+  timer = setInterval(() => go(at + 1, true), 2200); go(at + 1, true);
+};
+$("picks").onclick = e => { const b = e.target.closest(".pick"); if (b) { stop(); flow = +b.dataset.i; hops = hopsOf(FLOWS[flow].steps); at = -1; draw(false); } };
+document.onkeydown = e => { if (e.key === "ArrowRight") $("next").click(); if (e.key === "ArrowLeft") $("back").click(); if (e.key === " ") { e.preventDefault(); $("play").click(); } };
+draw(false);
+</script>
+</body>
+</html>
