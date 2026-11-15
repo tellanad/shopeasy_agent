@@ -58,6 +58,19 @@ Additional action checks:
 - **Returns > ₹10,000** (`STAFF_APPROVAL_ABOVE = 10_000`) are saved with `status = "waiting_for_staff"` and require manual approval or rejection from the Streamlit sidebar or CLI `staff` command.
 - **Exchanges** require a non-null `size` (clothing/footwear) and available `stock`, decrementing inventory upon booking.
 
+## Current Skeleton & Production Roadmap
+
+This repository is a working **prototype / reference skeleton** designed for local demos and experimentation. To take it to production, the following upgrades are recommended:
+
+| Area | Current Skeleton | Production Target |
+| :--- | :--- | :--- |
+| **Auth & Access Control** | Customer ID dropdown and open Staff Approvals sidebar in `app.py` | Real authentication (OAuth/JWT) with server-verified `customer_id` and staff RBAC |
+| **Database** | Local SQLite (`shopeasy.db`), ephemeral on cloud containers | Managed PostgreSQL with migrations (Alembic) and atomic transactions for stock + bookings |
+| **Memory & Vector Store** | `InMemorySaver()` and `QdrantClient(":memory:")` rebuilt on startup | Persistent checkpointer (`PostgresSaver` / Redis) and hosted Qdrant / `pgvector` with offline indexing |
+| **Policy Guardrails** | Code checks ownership, duplicate bookings, and electronics; return windows rely on LLM prompt | Deterministic Python checks for all return windows (`delivered_on` + category rules) and string-serialized tool outputs |
+| **Reliability & Observability** | Unhandled API exceptions in UI stream; no tracing | Graceful error/rate-limit handling, per-user rate limiting, structured logs, and LLM tracing (LangSmith / OpenTelemetry) |
+| **CI/CD** | Manual `evals.py` runs | Automated unit tests for `guardrails()` + `evals.py` regression checks in GitHub Actions |
+
 ## Running Locally
 
 ```zsh
